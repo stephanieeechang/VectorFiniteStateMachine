@@ -6,11 +6,12 @@ from anki_vector.util import degrees, distance_mm, speed_mmps
 import imgclassification
 from transitions import Machine
 
+
 class StateMachine(object):
-    states = ['surveillance','defuse_bomb','in_the_heights', "burn_notice"]
+    states = ['surveillance', 'defuse_bomb', 'in_the_heights', "burn_notice"]
 
     def __init__(self, robot):
-        self.machine = Machine(model=self, states=self.states, initial='in_the_heights')
+        self.machine = Machine(model=self, states=self.states, initial='surveillance')
         self.robot = robot
 
         self.machine.add_transition(trigger='order', source='surveillance', dest='defuse_bomb')
