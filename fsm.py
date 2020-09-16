@@ -1,6 +1,6 @@
 import anki_vector
 import imgclassification
-from transition import machine
+from transitions import Machine
 
 class StateMachine(object):
     states = ['surveillance','defuse_bomb','in_the_heights', "burn_notice"]
@@ -40,10 +40,8 @@ class StateMachine(object):
     def defuse_bomb():
         state.return_idle()
 
-
     def in_the_heights():
         state.return_idle()
-
 
     def burn_notice():
         state.return_idle()
