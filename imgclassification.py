@@ -98,7 +98,6 @@ def main():
 
     # load images
     (train_raw, train_labels) = img_clf.load_data_from_folder('./train/')
-    print(train_labels)
     (test_raw, test_labels) = img_clf.load_data_from_folder('./test/')
     (wall_raw, _) = img_clf.load_data_from_folder('./wall/')
 
