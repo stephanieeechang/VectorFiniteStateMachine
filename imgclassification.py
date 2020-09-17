@@ -30,8 +30,18 @@ class ImageClassifier:
 
         return(data,labels)
 
+    def crop_center(self, img, cropx, cropy):
+        y = img.shape[1]
+        x = img.shape[2]
+        startx = x // 2 - (cropx // 2)
+        starty = y // 2 - (cropy // 2)
+        return img[:, starty:starty + cropy, startx:startx + cropx, :]
+
     def extract_image_features(self, data):
         print("data shape = ", data.shape)
+        if data.shape[1] != 240 and data.shape[2] != 320:
+            # data = data.reshape((data.shape[0], 240, 320, data.shape[3]))
+            data = self.crop_center(data, 320, 240)
         l = []
         for im in data:
             im_gray = color.rgb2gray(im)

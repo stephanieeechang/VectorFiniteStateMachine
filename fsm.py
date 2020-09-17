@@ -60,7 +60,7 @@ class StateMachine(object):
             say_state.result()
             time.sleep(3)
             latest_image = self.robot.camera.latest_image
-            scaled_image = latest_image.annotate_image(fit_size=(320,240))
+            scaled_image = latest_image.annotate_image(scale=0.7)
             # image = asarray(Image.open("./outputs/" + "img_" + timestamp + ".bmp"))
             say_state = self.robot.behavior.say_text("Picture taken")
             say_state.result()
