@@ -89,10 +89,11 @@ class StateMachine(object):
     def defuse_bomb(self):
         say_state = self.robot.behavior.say_text("Defuse the Bomb!")
         say_state.result()
-        cube = self.robot.world.connected_light_cube
-        get_cube = self.robot.behavior.dock_with_cube(cube)
-        get_cube.result()
-        pickup_cube = self.robot.behavior.pickup_object(cube)
+        # self.robot.world.connect_cube()
+        cube = self.robot.world.light_cube
+        # get_cube = self.robot.behavior.dock_with_cube(cube)
+        # get_cube.result()
+        pickup_cube = self.robot.behavior.pickup_object(target_object=cube)
         pickup_cube.result()
         drive_forward = self.robot.behavior.drive_straight()
         drive_forward.result(distance_mm(250), speed_mmps(500))
