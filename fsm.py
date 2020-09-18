@@ -91,7 +91,6 @@ class StateMachine(object):
         say_state.result()
         # self.robot.world.connect_cube()
         cube = self.robot.world.light_cube
-
         # get_cube = self.robot.behavior.dock_with_cube(cube)
         # get_cube.result()
         pickup_cube = self.robot.behavior.pickup_object(target_object=cube)
@@ -125,7 +124,7 @@ class StateMachine(object):
         say_state = self.robot.behavior.say_text("Burn Notice")
         say_state.result()
 
-        say_text = self.robot.behavior.say_text("I'm not a spy.")
+        say_text = self.robot.behavior.say_text("I am not a spy.")
 
         # Turn right to start walking in square
         turn_right = self.robot.behavior.turn_in_place(degrees(-90))
@@ -158,17 +157,24 @@ class StateMachine(object):
         turn_right.result()
         # Complete the first half of S
         first_half_s = self.robot.motors.set_wheel_motors(25, 75)
-        time.sleep(7)
+        time.sleep(5.5)
         # Wait until the first half is done
         first_half_s.result()
         # Complete the second half of S
         second_half_s = self.robot.motors.set_wheel_motors(75, 25)
-        time.sleep(7)
+        time.sleep(5.5)
         # Wait until the second half is done
         second_half_s.result()
         # Stop the motors
         stop_motion = self.robot.motors.stop_all_motors()
         stop_motion.result()
+        # Return to a good position for burn notice
+        backward = self.robot.behavior.drive_straight(distance_mm(-80), speed_mmps(20))
+        backward.result()
+        turn_left = self.robot.behavior.turn_in_place(degrees(90))
+        turn_left.result()
+        drive_back = self.robot.behavior.drive_straight(distance_mm(-200), speed_mmps(50))
+        drive_back.result()
 
     def burn_notice_routine(self, degree=90):
         say_text_1 = self.robot.behavior.say_text("I am not a spy.")
