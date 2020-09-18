@@ -16,6 +16,7 @@ class StateMachine(object):
     def __init__(self, robot):
         self.machine = Machine(model=self, states=self.states, initial='surveillance')
         self.robot = robot
+        self.img_clf = ImageClassifier()
 
         self.machine.add_transition(trigger='order', source='surveillance', dest='defuse_bomb')
         self.machine.add_transition(trigger='drone', source='surveillance', dest='in_the_heights')
@@ -25,6 +26,13 @@ class StateMachine(object):
         self.machine.add_transition(trigger='return_idle', source='burn_notice', dest='surveillance')
 
     def run(self):
+        # load training data
+        (train_raw, train_labels) = self.img_clf.load_data_from_folder('./train/')
+        # convert images into features
+        train_data = self.img_clf.extract_image_features(train_raw)
+        # train model
+        self.img_clf.train_classifier(train_data, train_labels)
+
         while True:
             print("State: " + self.state)
             if self.state == 'surveillance':
@@ -45,17 +53,8 @@ class StateMachine(object):
         say_state = self.robot.behavior.say_text("Surveillance!")
         say_state.result()
 
-        # train image classification model
-        img_clf = ImageClassifier()
-        # load images
-        (train_raw, train_labels) = img_clf.load_data_from_folder('./train/')
-        # convert images into features
-        train_data = img_clf.extract_image_features(train_raw)
-        # train model
-        img_clf.train_classifier(train_data, train_labels)
-
-        label = 'none'
-        while label == 'none':
+        label = None
+        while label is None:
             say_state = self.robot.behavior.say_text("Taking a picture!")
             say_state.result()
             time.sleep(3)
@@ -69,8 +68,9 @@ class StateMachine(object):
             scaled_image.save("./outputs/" + "img_" + timestamp + ".bmp")
             ic = io.ImageCollection("./outputs/" + "img_" + timestamp + ".bmp", load_func=self.imread_convert)
             image = io.concatenate_images(ic)
-            img_processed = img_clf.extract_image_features(image)
-            label = img_clf.predict_labels(img_processed)
+            img_processed = self.img_clf.extract_image_features(image)
+            label = self.img_clf.predict_labels(img_processed)
+            print(label)
 
         # Place holder for transitions
         if label == 'order':
@@ -95,12 +95,12 @@ class StateMachine(object):
         # get_cube.result()
         pickup_cube = self.robot.behavior.pickup_object(target_object=cube)
         pickup_cube.result()
-        drive_forward = self.robot.behavior.drive_straight()
-        drive_forward.result(distance_mm(250), speed_mmps(500))
-        place_cube = self.robot.behavior.place_object_on_ground_here()
+        drive_forward = self.robot.behavior.drive_straight(distance_mm(330), speed_mmps(50))
+        drive_forward.result()
+        place_cube = self.robot.behavior.place_object_on_ground_here(num_retries=5)
         place_cube.result()
-        drive_back = self.robot.behavior.drive_straight()
-        drive_back.result(distance_mm(-460), speed_mmps(500))
+        drive_back = self.robot.behavior.drive_straight(distance_mm(-380), speed_mmps(50))
+        drive_back.result()
         # Return to IDLE
         self.surveillance()
 
@@ -156,13 +156,13 @@ class StateMachine(object):
         # Wait until turn_right is completed
         turn_right.result()
         # Complete the first half of S
-        first_half_s = self.robot.motors.set_wheel_motors(25, 50)
-        time.sleep(10)
+        first_half_s = self.robot.motors.set_wheel_motors(25, 75)
+        time.sleep(7)
         # Wait until the first half is done
         first_half_s.result()
         # Complete the second half of S
-        second_half_s = self.robot.motors.set_wheel_motors(50, 25)
-        time.sleep(10)
+        second_half_s = self.robot.motors.set_wheel_motors(75, 25)
+        time.sleep(7)
         # Wait until the second half is done
         second_half_s.result()
         # Stop the motors
