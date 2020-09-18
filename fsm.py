@@ -53,8 +53,8 @@ class StateMachine(object):
         say_state = self.robot.behavior.say_text("Surveillance!")
         say_state.result()
 
-        label = None
-        while label is None:
+        label = 'none'
+        while label == 'none':
             say_state = self.robot.behavior.say_text("Taking a picture!")
             say_state.result()
             time.sleep(3)
@@ -91,6 +91,7 @@ class StateMachine(object):
         say_state.result()
         # self.robot.world.connect_cube()
         cube = self.robot.world.light_cube
+
         # get_cube = self.robot.behavior.dock_with_cube(cube)
         # get_cube.result()
         pickup_cube = self.robot.behavior.pickup_object(target_object=cube)
