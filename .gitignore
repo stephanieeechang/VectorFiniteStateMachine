@@ -3,3 +3,4 @@
 .idea/other.xml
 __pycache__/imgclassification.cpython-38.pyc
 __pycache__/ransac_score.cpython-38.pyc
+outputs/.DS_Store
