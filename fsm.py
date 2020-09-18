@@ -3,8 +3,11 @@ import anki_vector
 import time
 import sys
 from anki_vector.util import degrees, distance_mm, speed_mmps
-import imgclassification
+from imgclassification import ImageClassifier
 from transitions import Machine
+import datetime
+import numpy as np
+from skimage import io
 
 
 class StateMachine(object):
@@ -33,26 +36,73 @@ class StateMachine(object):
             if self.state == 'burn_notice':
                 self.burn_notice()
 
+    def imread_convert(self, f):
+        return io.imread(f).astype(np.uint8)
+
     def surveillance(self):
         set_head_angle = self.robot.behavior.set_head_angle(degrees(0))
         set_head_angle.result()
         say_state = self.robot.behavior.say_text("Surveillance!")
         say_state.result()
 
-        label = None
+        # train image classification model
+        img_clf = ImageClassifier()
+        # load images
+        (train_raw, train_labels) = img_clf.load_data_from_folder('./train/')
+        # convert images into features
+        train_data = img_clf.extract_image_features(train_raw)
+        # train model
+        img_clf.train_classifier(train_data, train_labels)
+
+        label = 'none'
+        while label == 'none':
+            say_state = self.robot.behavior.say_text("Taking a picture!")
+            say_state.result()
+            time.sleep(3)
+            latest_image = self.robot.camera.latest_image
+            scaled_image = latest_image.annotate_image(scale=0.7)
+            # image = asarray(Image.open("./outputs/" + "img_" + timestamp + ".bmp"))
+            say_state = self.robot.behavior.say_text("Picture taken")
+            say_state.result()
+            timestamp = datetime.datetime.now().strftime("%dT%H%M%S%f")
+            # image_raw = latest_image.raw_image
+            scaled_image.save("./outputs/" + "img_" + timestamp + ".bmp")
+            ic = io.ImageCollection("./outputs/" + "img_" + timestamp + ".bmp", load_func=self.imread_convert)
+            image = io.concatenate_images(ic)
+            img_processed = img_clf.extract_image_features(image)
+            label = img_clf.predict_labels(img_processed)
+
         # Place holder for transitions
         if label == 'order':
-            self.order()
+            say_state = self.robot.behavior.say_text("Order")
+            say_state.result()
+            self.defuse_bomb()
         if label == 'drone':
-            self.drone()
-        if label == 'order':
-            self.inspection()
+            say_state = self.robot.behavior.say_text("Drone")
+            say_state.result()
+            self.in_the_heights()
+        if label == 'inspection':
+            say_state = self.robot.behavior.say_text("Inspection")
+            say_state.result()
+            self.burn_notice()
 
     def defuse_bomb(self):
         say_state = self.robot.behavior.say_text("Defuse the Bomb!")
         say_state.result()
+        # self.robot.world.connect_cube()
+        cube = self.robot.world.light_cube
+        # get_cube = self.robot.behavior.dock_with_cube(cube)
+        # get_cube.result()
+        pickup_cube = self.robot.behavior.pickup_object(target_object=cube)
+        pickup_cube.result()
+        drive_forward = self.robot.behavior.drive_straight()
+        drive_forward.result(distance_mm(250), speed_mmps(500))
+        place_cube = self.robot.behavior.place_object_on_ground_here()
+        place_cube.result()
+        drive_back = self.robot.behavior.drive_straight()
+        drive_back.result(distance_mm(-460), speed_mmps(500))
         # Return to IDLE
-        self.return_idle()
+        self.surveillance()
 
     def in_the_heights(self):
         say_state = self.robot.behavior.say_text("In the Heights")
@@ -68,7 +118,7 @@ class StateMachine(object):
         face_animation.result()
 
         # Return to IDLE
-        self.return_idle()
+        self.surveillance()
 
     def burn_notice(self):
         say_state = self.robot.behavior.say_text("Burn Notice")
@@ -92,7 +142,7 @@ class StateMachine(object):
         lower_lift_end.result()
 
         # Return to IDLE
-        self.return_idle()
+        self.surveillance()
 
     def connect_robot(self):
         self.robot.connect()
@@ -139,7 +189,7 @@ class StateMachine(object):
 async def main():
     serial = sys.argv[1]
     print("Serial Number: " + serial)
-    robot = anki_vector.AsyncRobot(serial=serial)
+    robot = anki_vector.AsyncRobot(serial=serial, show_viewer=True)
     state_machine = StateMachine(robot)
     state_machine.connect_robot()
     state_machine.run()

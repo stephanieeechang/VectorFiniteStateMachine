@@ -2,7 +2,7 @@
 
 import numpy as np
 import re
-from sklearn import svm, metrics
+from sklearn import svm, metrics, linear_model
 from skimage import io, feature, filters, exposure, color
 import ransac_score
 import math
@@ -30,8 +30,18 @@ class ImageClassifier:
 
         return(data,labels)
 
+    def crop_center(self, img, cropx, cropy):
+        y = img.shape[1]
+        x = img.shape[2]
+        startx = x // 2 - (cropx // 2)
+        starty = y // 2 - (cropy // 2)
+        return img[:, starty:starty + cropy, startx:startx + cropx, :]
+
     def extract_image_features(self, data):
         print("data shape = ", data.shape)
+        if data.shape[1] != 240 and data.shape[2] != 320:
+            # data = data.reshape((data.shape[0], 240, 320, data.shape[3]))
+            data = self.crop_center(data, 320, 240)
         l = []
         for im in data:
             im_gray = color.rgb2gray(im)
@@ -76,7 +86,7 @@ class ImageClassifier:
 
             line_X = np.arange(X.min(), X.max())[:, np.newaxis]
             line_y_ransac = ransac.predict(line_X)
-            s, i = find_line([line_X[0,0], line_y_ransac[0]],[line_X[-1,0], line_y_ransac[-1]])
+            s, i = self.find_line([line_X[0, 0], line_y_ransac[0]], [line_X[-1, 0], line_y_ransac[-1]])
 
             slope.append(s)
             intercept.append(i)
@@ -127,11 +137,11 @@ def main():
         if(test_labels[i] != predicted_labels[i]):
             print(i)
 
-    # ransac
-    print("\nRANSAC results")
-    print("=============================")
-    s, i = img_clf.line_fitting(wall_raw)
-    print(f"Line Fitting Score: {ransac_score.score(s,i)}/10")
+    # # ransac
+    # print("\nRANSAC results")
+    # print("=============================")
+    # s, i = img_clf.line_fitting(wall_raw)
+    # print(f"Line Fitting Score: {ransac_score.score(s,i)}/10")
 
 if __name__ == "__main__":
     main()
