@@ -1,0 +1,5 @@
+# Created by .ignore support plugin (hsz.mobi)
+.DS_Store
+.idea/other.xml
+__pycache__/imgclassification.cpython-38.pyc
+__pycache__/ransac_score.cpython-38.pyc
